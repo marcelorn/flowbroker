@@ -54,7 +54,6 @@ parser.addArgument(['-f', '--flow'],
 parser.addArgument(['-m', '--message'],
                    {help:'Event that should trigger a flow execution run.'});
 parser.addArgument(['-d', '--device'], {help:'Device that generated the event.'});
-parser.addArgument(['-t', '--template'], {help:'Device template that generated the event.'});
 parser.addArgument(['-s', '--server'], {help:'Run as a daemon service (production)', action: "storeTrue"});
 parser.addArgument(['-i', '--kill-idle'],
                    {help:'If no more events are generaed within KILL_IDLE milliseconds, kill ' +
@@ -105,11 +104,9 @@ if (args.message && args.device) {
   let triggeredFlows = [];
   if (args.device) {
     triggeredFlows = flows.getByDevice(args.device);
-  } else if (args.template) {
-    triggeredFlows = flows.getByTemplate(args.template);
   } else {
     // invalid command
-    logger.info("Message can only be used with either [-m | --message] or [-t | --template]");
+    logger.info("Message can only be used with [-d | --device]");
     process.exit(1);
   }
 
@@ -128,7 +125,7 @@ if (args.message && args.device) {
 }
 
 if (!args.server && !hasMessages) {
-  logger.info('Nothing to do: run with either [-s] or [-f <flow> -m <message> [-d <device> | -t <template>]]');
+  logger.info('Nothing to do: run with either [-s] or [-f <flow> -m <message> -d <device>]');
   process.exit(0);
 }
 

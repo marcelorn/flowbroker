@@ -10,7 +10,6 @@ var http = require('./nodes/http/index').Handler;
 var select = require('./nodes/switch/index').Handler;
 var template = require('./nodes/template/index').Handler;
 var device_in = require('./nodes/device-in/device-in').Handler;
-var device_tpl = require('./nodes/template-in/template-in').Handler;
 var actuate = require('./nodes/actuate/actuate').Handler;
 var device_out = require('./nodes/device-out/device-out').Handler;
 var multi_device_out = require('./nodes/multi-device-out/multi-device-out').Handler;
@@ -120,7 +119,6 @@ class NodeManager {
         "multi device out": new multi_device_out(kafkaMessenger, config.kafkaMessenger.dojot.subjects.deviceData),
         "notification": new notification(
             kafkaMessenger, config.kafkaMessenger.dojot.subjects.notification, tenant),
-        "device template in": new device_tpl(),
         "actuate": new actuate(
             new Publisher(kafkaMessenger, config.kafkaMessenger.dojot.subjects.devices, tenant)),
         "get context": new get_context(),

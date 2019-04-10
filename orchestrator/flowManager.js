@@ -53,7 +53,6 @@ class ParsedFlow {
   constructor(flow) {
     this.heads = [];
     this.devices = [];
-    this.templates = [];
     this.nodes = {}; // nodes dict should be used on cache only: mongo doesn't like dots on keys
     this.red = flow;
   }
@@ -111,15 +110,9 @@ class FlowManager {
       parsed.nodes[node.id] = node;
 
       // Properly add the head nodes.
-      switch (node.type) {
-        case "device in":
-          parsed.heads.push(node.id);
-          parsed.devices.push(node._device_id);
-          break;
-        case "device template in":
-          parsed.heads.push(node.id);
-          parsed.templates.push(node.device_template_id);
-          break;
+      if (node.type === "device in") {
+        parsed.heads.push(node.id);
+        parsed.devices.push(node._device_id);
       }
     }
 
@@ -257,14 +250,6 @@ class FlowManager {
       // we might want to return ids only, but that would be best only if we had a local cache
       // in place
       resolve(this.collection.find({ devices: deviceid }).toArray());
-    });
-  }
-
-  getByTemplate(templateid) {
-    return new Promise((resolve) => {
-      // we might want to return ids only, but that would be best only if we had a local cache
-      // in place
-      resolve(this.collection.find({ templates: templateid }).toArray());
     });
   }
 }

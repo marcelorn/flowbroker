@@ -117,7 +117,7 @@ module.exports = class DeviceIngestor {
     }
   }
 
-  handleFlow(event, flow, isTemplate) {
+  handleFlow(event, flow) {
     flow.nodeMap = {};
     for (let node of flow.red) {
       flow.nodeMap[node.id] = node;
@@ -127,16 +127,7 @@ module.exports = class DeviceIngestor {
       const node = flow.nodeMap[head];
       // handle input by device
       if (node.hasOwnProperty('_device_id') &&
-        (node._device_id === event.metadata.deviceid) &&
-        (isTemplate === false)) {
-        this._publish(node, { payload: event.attrs }, flow, event.metadata);
-      }
-
-      // handle input by template
-      if (node.hasOwnProperty('device_template_id') &&
-        event.metadata.hasOwnProperty('templates') &&
-        (event.metadata.templates.includes(node.device_template_id)) &&
-        (isTemplate === true)) {
+        (node._device_id === event.metadata.deviceid)) {
         this._publish(node, { payload: event.attrs }, flow, event.metadata);
       }
     }
@@ -149,9 +140,7 @@ module.exports = class DeviceIngestor {
     return this.client.getDeviceInfo(event.metadata.tenant, event.metadata.deviceid,
       this.redis.getState()).then((data) => {
 
-        // update event with template and static attr info
-        event.metadata.templates = data.templates;
-
+        // update event with static attr info
         if (data.staticAttrs !== null) {
           if (event.metadata.hasOwnProperty('reason')) {
             if (event.metadata.reason === 'statusUpdate') {
@@ -163,30 +152,11 @@ module.exports = class DeviceIngestor {
             event.attrs[attr] = data.staticAttrs[attr];
           }
         }
-
-        let flowsPromise = [];
-        // [0]: flows starting with a given device
-        flowsPromise.push(flowManager.getByDevice(event.metadata.deviceid));
-
-        // [1..N]: flows starting with a given template
-        for (let template of data.templates) {
-          flowsPromise.push(flowManager.getByTemplate(template));
-        }
-
-        return Promise.all(flowsPromise);
-      }).then(flowLists => {
-
-        // [0]: flows starting with a given device
-        let flows = flowLists.shift();
+        return flowManager.getByDevice(event.metadata.deviceid);
+      }).then(flows => {
+        // flows starting with a given device
         for (let flow of flows) {
-          this.handleFlow(event, flow, false);
-        }
-
-        // [1..N]: flows starting with a given template
-        for (let flows of flowLists) {
-          for (let flow of flows) {
-            this.handleFlow(event, flow, true);
-          }
+          this.handleFlow(event, flow);
         }
       });
   }
